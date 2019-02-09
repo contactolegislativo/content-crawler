@@ -1,0 +1,21 @@
+{
+  "site": {
+    "baseUrl": "http://www.senado.gob.mx",
+    "endpoints": [ 
+      { 
+        "url": "/64/senadores/por_orden_alfabetico/%s", 
+        "type": "alpha",
+        "handler": "main",
+        "trace": [
+          {
+            "url": "\/\\d+\/senador\/\\d+",
+            "handler": "congressman",
+            "trace": [
+              { "url": "\/\\d+\/asistencias\/\\d+", "trace": [], "handler": "attendance" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

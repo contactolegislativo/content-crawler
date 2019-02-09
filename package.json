@@ -1,0 +1,20 @@
+{
+  "name": "content-manager",
+  "version": "1.0.0",
+  "description": "Utility to download a hard copy of web content",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cristian Colorado",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.6.1",
+    "cheerio": "^1.0.0-rc.2",
+    "iconv-lite": "^0.4.24",
+    "mkdirp": "^0.5.1",
+    "path": "^0.12.7",
+    "request": "^2.88.0",
+    "retry-request": "^4.0.0"
+  }
+}

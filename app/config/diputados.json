@@ -1,0 +1,30 @@
+{
+  "site": {
+    "baseUrl": "http://sitl.diputados.gob.mx/LXIV_leg/",
+    "encoding": "ISO-8859-1",
+    "endpoints": [ 
+      { 
+        "url": "listado_diputados_gpnp.php?tipot=%s", 
+        "type": "alpha",
+        "handler": "main",
+        "trace": [
+          {
+            "url": "curricula\\.php\\?dipt=\\d+",
+            "handler": "congressman",
+            "trace": [
+              { 
+                "url": "asistencias_diputados_xperiodonplxiv\\.php\\?dipt=\\d+", 
+                "trace": [{
+                    "url": "asistencias_por_pernplxiv\\.php\\?iddipt=\\d+\\&pert=\\d+",
+                    "trace": [],
+                    "handler": "attendance"
+                  }], 
+                "handler": "attendanceIntermediate" 
+              }  
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
