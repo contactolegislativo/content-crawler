@@ -14,7 +14,9 @@ function _expandContent(content, endpoint) {
       trace.push({
         url: match[0],
         trace: endpoint.trace,
-        handler: endpoint.handler
+        handler: endpoint.handler,
+        type: endpoint.storage || 'text',
+        target: endpoint.target
       });  
     }
     latest = match[0];
@@ -23,7 +25,7 @@ function _expandContent(content, endpoint) {
   return trace;
 }
 
-function _request(url, callback) {
+function _request(url, type, callback) {
   console.log(' Fetching: ', url);
   let _self = this;
   request({
@@ -34,7 +36,7 @@ function _request(url, callback) {
       retries: 5
     }, function(err, response, html) {
       if(!err){
-          let decodedHtml = iconv.decode(html, _self.source.site.encoding || 'UTF-8');
+          let decodedHtml = type == 'regular' ? iconv.decode(html, _self.source.site.encoding || 'UTF-8') : html;
           callback(null, decodedHtml);
       } else {
         console.log(`ERROR: ${url} with ${err.code}`);
@@ -53,6 +55,7 @@ function _processContent(decodedHtml, endpoint, next) {
     url: endpoint.url,
     html: decodedHtml,
     handler: endpoint.handler,
+    type: endpoint.storage || 'text',
     trace: trace
   });
 }
@@ -63,12 +66,15 @@ function _fetch(contentManager, baseUrl, endpoint, next) {
   if(contentManager.exist(url)) {
     console.log(` Cache ${url}`)
     let buffer = contentManager.read(url);
-    let decodedHtml = iconv.decode(buffer, this.source.site.encoding || 'UTF-8');
+    let decodedHtml = iconv.decode(buffer, 'UTF-8');
     _processContent(decodedHtml, endpoint, next);
   } else {
-    _request.bind(this)(url, function(err, decodedHtml) {
-      console.log(` Saving ${url}`)
-      contentManager.store(url, decodedHtml);
+    _request.bind(this)(url, endpoint.type, function(err, decodedHtml) {
+      if(endpoint.type == 'image') {
+        contentManager.storeImage(url, endpoint.target, decodedHtml);
+      } else {
+        contentManager.store(url, decodedHtml);
+      }
       _processContent(decodedHtml, endpoint, next);
     });
   }
@@ -77,9 +83,10 @@ function _fetch(contentManager, baseUrl, endpoint, next) {
 function _fetchAndExpand(site, endpoint, next) {
   console.log('Processing ' + site + endpoint.url);
   let contentManager = this.contentManager;
+  let _self = this;
   _fetch.bind(this)( contentManager, site, endpoint, function(err, content) {
     if(content.handler) {
-      this.processor[content.handler](content.url, content.html);
+      this.processor[content.handler](content.url, content.html, this.source.site.baseUrl);
     }
     async.mapSeries(content.trace, _fetchAndExpand.bind(this, site), function(err, content) {
         next(err, content);

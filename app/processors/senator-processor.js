@@ -3,7 +3,7 @@ const cheerio = require('cheerio');
 function toCsv() {
   let line = '';
   for(i in arguments) {
-    let data = arguments[i].indexOf(',') >= 0 ? '\'' + arguments[i] + '\'': arguments[i];
+    let data = arguments[i].indexOf(',') >= 0 ? '\"' + arguments[i] + '\"': arguments[i];
     line +=  data   + ', ';
   }
   return line.substring(0, line.length - 2);
@@ -83,6 +83,9 @@ function handleURL(text) {
   return handleRegex(regex, 1);
 }
 
+function handleImageName(url) {
+  return url ? url.substring(url.lastIndexOf('/') + 1, url.length) : 'uknown.jpg';
+}
 
 class SenatorContentProcessor {
   constructor() {
@@ -93,15 +96,19 @@ class SenatorContentProcessor {
     }
   }
   
-  main(url, content) {
+  none() {
+    
+  }
+  
+  main(url, content, baseUrl) {
     console.log('  Parsing' + url);
     const $ = cheerio.load(content);
     const _self = this;
     
     if(_self.content.main.length == 0) {
       _self.content.main += toCsv(
-        'id', 'source', 'party', 'name', 'picture', 
-        'location', 'floor', 'office', 'phone', 'ext', 
+        'id', 'source', 'party', 'logo', 'name', 'picture', 
+        'state', 'stateImg', 'floor', 'office', 'phone', 'ext', 
         'email', 'facebook', 'twitter', 'youtube', 
         'instagram'
       ) + '\n';  
@@ -112,14 +119,17 @@ class SenatorContentProcessor {
         // Party
         let panel = $(this).attr('class');
         let name = $(this).find('.panel-heading h3 strong a');
+        let partyLogo = $(this).find('.panel-heading a img').attr('src');
         let source = name.attr('href');
         let deputy = {
           id: handleURL(source),
-          source: source,
+          source: baseUrl + source,
           party: panel.substring(panel.indexOf('-') + 1, panel.length).toUpperCase(),
+          partyLogo: handleImageName(partyLogo),
           name: handleName(name.text()),
-          picture: $(this).find('.panel-body .img-capital img').attr('src'),
+          picture: handleImageName($(this).find('.panel-body .img-capital img').attr('src')),
           location: $(this).find('.panel-footer .btnTxt').text(),
+          locationImg: handleImageName($(this).find('.panel-footer img').attr('src')),
           facebook: '', twitter: '', youtube: '', instagram: ''
         }
         
@@ -154,15 +164,15 @@ class SenatorContentProcessor {
         });
         
         _self.content.main += toCsv(
-          deputy.id, deputy.source, deputy.party, deputy.name, deputy.picture, 
-          deputy.location, deputy.floor, deputy.office, deputy.phone, deputy.ext, 
+          deputy.id, deputy.source, deputy.party, deputy.partyLogo, deputy.name, deputy.picture, 
+          deputy.location, deputy.locationImg, deputy.floor, deputy.office, deputy.phone, deputy.ext, 
           deputy.email, deputy.facebook, deputy.twitter, deputy.youtube, 
           deputy.instagram
         ) + '\n';
     });
   }
   
-  congressman(url, content) {
+  congressman(url, content, baseUrl) {
     console.log('  Parsing' + url);
     const $ = cheerio.load(content);
     const _self = this;
@@ -170,14 +180,14 @@ class SenatorContentProcessor {
     if(_self.content.congressman.length == 0) {
       _self.content.congressman += toCsv('id', 'source', 
         'displayName', 'gender', 'type', 'surrogate', 
-        'floor', 'office', 'phone', 'ext', 
-        'email', 'position', 'comisionId', 'comision', 'href') + '\n';    
+        // 'floor', 'office', 'phone', 'ext', 'email', 
+        'position', 'comisionId', 'comision', 'href') + '\n';    
     }
     
     let name = $('.main h2').text();
     let deputy = {
       id: handleURL(url),
-      source: url,
+      source: baseUrl + url,
       displayName: handleName(name),
       gender: findGender(name)
     };
@@ -211,21 +221,29 @@ class SenatorContentProcessor {
           if(children.length == 0) {
             _self.content.congressman += toCsv(deputy.id, deputy.source, 
               deputy.displayName, deputy.gender, deputy.type, deputy.surrogate, 
-              deputy.floor, deputy.office, deputy.phone, deputy.ext, 
-              deputy.email) + '\n';  
+              // deputy.floor, deputy.office, deputy.phone, deputy.ext, deputy.email
+            ) + '\n';  
           } else {
             $(this).children().each(function(index, el) {
-              if(el.name == 'p') {
+              if(el.name == 'p' || el.name == 'strong') {
                 position = $(this).text().replace(':','');
+                // Junta de Coordinación Política
+                if(position.indexOf('Junta') >= 0) {
+                  position = 'Coordinador del Grupo Parlamentario';
+                } 
               } else if(el.name == 'ul') {
                 $(this).find('li a').each(function(index) {
-                  let comision = $(this).text();
+                  let text = $(this).text();
+                  if(text.indexOf('Grupo Parlamentario') >= 0)
+                    text = 'Junta de Coordinación Política';
+                  let comision = text;
+                  
                   let href = $(this).attr('href');
                   let id = handleComision(href);
                   _self.content.congressman += toCsv(deputy.id, deputy.source, 
                     deputy.displayName, deputy.gender, deputy.type, deputy.surrogate, 
-                    deputy.floor, deputy.office, deputy.phone, deputy.ext, 
-                    deputy.email, position, id, comision, href) + '\n';  
+                    // deputy.floor, deputy.office, deputy.phone, deputy.ext, deputy.email, 
+                    position, id, comision, href) + '\n';  
                 });
               }
             });  

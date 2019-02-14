@@ -11,8 +11,35 @@
             "url": "\/\\d+\/senador\/\\d+",
             "handler": "congressman",
             "trace": [
-              { "url": "\/\\d+\/asistencias\/\\d+", "trace": [], "handler": "attendance" }
+              { "url": "\/\\d+\/asistencias\/\\d+", "trace": [], "handler": "attendance" },
+              {
+                "url": "\/\\d+\/\\w+\/escudos\/([\\w\\-]+(\\.jpg|\\.png)+)",
+                "storage": "image",
+                "target": {
+                  "folder": "img/escudos",
+                  "name": "([\\w\\-]+(\\.jpg|\\.png)+)"
+                },
+                "trace": []
+              }
             ]
+          },
+          {
+            "url": "\/\\d+\/images\/senadores\/\\d+\/([\\w+|-]+(\\.jpg|\\.png))",
+            "storage": "image",
+            "target": {
+              "folder": "img/senadores",
+              "name": "([\\w\\-]+(\\.jpg|\\.png)+)"
+            },
+            "trace": []
+          },
+          {
+            "url": "\/\\d+\/\\w+\/iconos_partidos\/([\\w\\-]+(\\.jpg|\\.png)+)",
+            "storage": "image",
+            "target": {
+              "folder": "img/parties",
+              "name": "([\\w\\-]+(\\.jpg|\\.png)+)"
+            },
+            "trace": []
           }
         ]
       }

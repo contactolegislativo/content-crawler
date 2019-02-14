@@ -20,6 +20,24 @@
                     "handler": "attendance"
                   }], 
                 "handler": "attendanceIntermediate" 
+              },
+              {
+                "url": "\\.\/fotos_lxivconfondo\/([\\w\\-]+(\\.jpg|\\.png)+)",
+                "storage": "image",
+                "target": {
+                  "folder": "img/diputados",
+                  "name": "([\\w\\-]+(\\.jpg|\\.png)+)"
+                },
+                "trace": []
+              },
+              {
+                "url": "\\w+\/(encuentro|logo_movimiento_ciudadano|Logo_PT|logo_SP|LogoMorena|logvrd|pan|prd01|pri01)(\\.jpg|\\.png)+",
+                "storage": "image",
+                "target": {
+                  "folder": "img/parties/deputies",
+                  "name": "([\\w\\-]+(\\.jpg|\\.png)+)"
+                },
+                "trace": []
               }  
             ]
           }

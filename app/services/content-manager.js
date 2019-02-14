@@ -24,7 +24,8 @@ class ContentManager {
 
   ensureExistance(file, callback) {
     // Creating fodler hierarchy
-    mkdirp(file.substring(0, file.lastIndexOf(path.sep)), callback)
+    let folder = file.substring(0, file.lastIndexOf(path.sep));
+    mkdirp(folder, callback);
   }
 
   store(key, content) {
@@ -36,6 +37,23 @@ class ContentManager {
         });
       }
     });
+  }
+  
+  storeImage(url, target, content) {
+    let regex = RegExp(target.name,'g');
+    let match = regex.exec(url);
+    if(match) {
+        let file = path.join(this.REPOSITORY, target.folder, match[0]);
+        this.ensureExistance(file, function(err) {
+          if(!err) {
+            fs.writeFile(file, content, function(err) {
+                if (err) console.log(err);
+            });
+          } 
+        });
+    }
+    
+    this.store(url, 'this is a placeholder');
   }
 
   read(key) {

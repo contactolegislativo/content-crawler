@@ -136,6 +136,10 @@ function handleLocation(text) {
   }
 }
 
+function handleImageName(url) {
+  return url ? url.substring(url.lastIndexOf('/') + 1, url.length) : 'uknown.jpg';
+}
+
 class DeputyContentProcessor {
   constructor() {
     this.content = {
@@ -158,20 +162,21 @@ class DeputyContentProcessor {
     console.log('  Parsing ' + url);
   }
   
-  congressman(url, content) {
+  congressman(url, content, baseUrl) {
     console.log('  Parsing congressman ' + url);  
     const $ = cheerio.load(content);
     const _self = this;
   
     let deputy = {
       id: handleURL(url),
-      source: url
+      source: baseUrl + url
     };
     
     $('table.cajasombra > tbody > tr > td > table > tbody > tr > td').filter(function(index){
       switch(index) {
         case 0:
-          deputy.picture = $(this).find('img').attr('src');
+          // deputy.picture = baseUrl + $(this).find('img').attr('src');
+          deputy.picture = handleImageName($(this).find('img').attr('src'));
           break;
         case 2:
           $(this).find('td').each(function(index) {
@@ -203,9 +208,30 @@ class DeputyContentProcessor {
           });
           break;
         case 3: 
-          let party = $(this).find('img').attr('src');
-          deputy.party = handleParty(party);
-          deputy.partyImg = party;
+          let partyUrl = $(this).find('img').attr('src');
+          deputy.party = handleParty(partyUrl);
+          deputy.partyImg = handleImageName(partyUrl);
+          if(deputy.party == "encuentro") {
+            deputy.party = "PES";
+          } else if(deputy.party == "logo_movimiento_ciudadano") {
+            deputy.party = "MC";
+          } else if(deputy.party == "Logo_PT") {
+            deputy.party = "PT";
+          } else if(deputy.party == "logo_SP") {
+            deputy.party = "SG";
+          } else if(deputy.party == "LogoMorena") {
+            deputy.party = "MORENA";
+          } else if(deputy.party == "logvrd") {
+            deputy.party = "PVEM";
+          } else if(deputy.party == "pan") {
+            deputy.party = "PAN";
+          } else if(deputy.party == "prd01") {
+            deputy.party = "PRD";
+          } else if(deputy.party == "pri01") {
+            deputy.party = "PRI";
+          } else {
+            deputy.party = "SG";
+          }
           break;
       }
     });
@@ -215,7 +241,7 @@ class DeputyContentProcessor {
       deputy.email, deputy.birthname, deputy.surrogate, deputy.party, deputy.partyImg) + '\n';
   } 
   
-  attendanceIntermediate(url, content) {
+  attendanceIntermediate(url, content, baseUrl) {
     console.log('  Parsing intermediate ' + url);
     const $ = cheerio.load(content);
     const _self = this;
@@ -229,7 +255,7 @@ class DeputyContentProcessor {
     
   }
   
-  attendance(url, content) {
+  attendance(url, content, baseUrl) {
     console.log('  Parsing attendance ' + url);
     const $ = cheerio.load(content);
     const _self = this;
@@ -247,7 +273,7 @@ class DeputyContentProcessor {
             let attendance = handleCalendarAttendance(text);
             if(attendance.status != 'uknown') {
               let attendanceDate = attendance.day + '/' + month[date.month.toLowerCase()] + '/' + date.year ;
-              _self.content.attendance += toCsv(sessionId, _self.data.sessions[sessionId], deputyId, attendance.status, attendanceDate, url) + '\n';
+              _self.content.attendance += toCsv(sessionId, _self.data.sessions[sessionId], deputyId, attendance.status, attendanceDate, baseUrl + url) + '\n';
             }
           }
         });
